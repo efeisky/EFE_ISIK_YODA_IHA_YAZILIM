@@ -10,6 +10,12 @@ class Person:
     def goster_kisi(self):
         print(f"{self.name} - {self.age} - {self.__tckn}")
 
+    def check_tckn(self, givenTckn):
+        if self.__tckn == givenTckn:
+            return self
+        else:
+            return None
+
 class BankAccount:
     def __init__(self, person: Person, account_no, cash):
         self.person = person
@@ -31,8 +37,43 @@ class BankAccount:
 
 exit = 0
 
-person = None
-account = None
+persons = []
+accounts = []
+
+def hesap_arama():
+    if not accounts:
+        print("HATA: Hic hesap yok.")
+        return None
+    acc_no = int(input("Hesap No: "))
+    acc = find_account(acc_no)
+    if acc is None:
+        print("HATA: Hesap bulunamadı")
+        return None
+
+    return acc
+
+def find_account(account_no):
+    for acc in accounts:
+        if acc.account_no == account_no:
+            return acc
+    return None
+
+def find_person_by_tckn(tckn):
+    for person in persons:
+        check = person.check_tckn(tckn)
+        if check != None:
+            return person
+    return None
+
+def generate_unique_id():
+    mevcut_acc_nos = {acc.account_no for acc in accounts}
+    #Aslında random yerine uuid ile yapılır ama program anlaşılırlığı ve kullanımı kolay olsun diye random yaptım.
+    while True:
+        new_no = random.randint(1000, 9999)
+        if new_no not in mevcut_acc_nos:
+            return new_no
+
+
 
 while exit < 1:
     print("Banka sistemine hoş geldiniz.")
@@ -60,43 +101,57 @@ while exit < 1:
         if not tckn.isdigit() or len(tckn) != 11:
             print("HATA: TCKN 11 haneli olmalı")
             continue
-        person = Person(name, int(age), tckn)
-        account = BankAccount(person, random.randint(0, 1000), 0)
 
-        print("Hesap başarıyla oluşturuldu")
+        kisi = Person(name, int(age), tckn)
+        uuid = generate_unique_id()
+        persons.append(kisi)
+        accounts.append(BankAccount(kisi, uuid, 0))
+
+        print(f"Hesap başarıyla oluşturuldu. HESAP NO: {uuid}")
 
     elif process == 2:
-        if account == None:
-            print("HATA: Önce hesap oluşturmalısınız")
+        acc = hesap_arama()
+        if acc == None:
             continue
-        print("Yatırılacak Para")
-        miktar = int(input("Miktar: "))
-        account.yatir_para(miktar)
+        
+        try:
+            miktar = float(input("Miktar: "))
+        except ValueError:
+            print("HATA: Geçerli bir sayı girin")
+            continue
+        acc.yatir_para(miktar)
 
     elif process == 3:
-        if account == None:
-            print("HATA: Önce hesap oluşturmalısınız")
+        acc = hesap_arama()
+        if acc == None:
             continue
 
         print("Çekilecek Para")
         miktar = int(input("Miktar: "))
-        account.cek_para(miktar)
+        acc.cek_para(miktar)
 
     elif process == 4:
-        if account == None:
-            print("HATA: Önce hesap oluşturmalısınız")
+        acc = hesap_arama()
+        if acc == None:
             continue
 
         print("Bakiye Göster")
-        account.goster_para()
+        acc.goster_para()
 
     elif process == 5:
-        if person == None:
+        if persons == None:
             print("HATA: Önce kişi oluşturmalısınız")
             continue
 
-        print("Kişi Bilgi Göster")
-        person.goster_kisi()
+        tckn = input("TCKN: ").strip()
+        if not tckn.isdigit() or len(tckn) != 11:
+            print("HATA: TCKN 11 haneli olmalı")
+            continue
+        person = find_person_by_tckn(tckn)
+        if person != None:
+            person.goster_kisi()
+        else: 
+            print("TCKN'ye göre kisi bulunamadı.")
 
     elif process == 6:
         print("Çıkış alındı. Hoşça kalın")
